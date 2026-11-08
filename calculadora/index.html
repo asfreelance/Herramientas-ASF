@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F6F7" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="../manifest.webmanifest"><link rel="apple-touch-icon" href="../icons/apple-touch-icon.png"><link rel="icon" type="image/png" href="../icons/icon-192.png">
+<title>Calculadora científica</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@600;700&display=swap">
+<style>
+:root {
+  /* Paleta del proyecto */
+  --black:        #0A0A0A;
+  --black-soft:   #111214;
+  --white:        #FFFFFF;
+  --off-white:    #F5F6F7;
+  --blue:         #1A365D;
+  --blue-light:   #2C5282;
+  --gray-line:    rgba(255,255,255,0.08);
+  --gray-line-dk: rgba(0,0,0,0.08);
+  --text-muted-d: rgba(255,255,255,0.6);
+  --text-muted-l: rgba(10,10,10,0.6);
+
+  /* Roles (tema claro) */
+  --bg: var(--off-white);
+  --surface: var(--white);
+  --surface-2: rgba(10,10,10,0.05);
+  --ink: var(--black);
+  --muted: var(--text-muted-l);
+  --line: var(--gray-line-dk);
+  --line-strong: rgba(10,10,10,0.2);
+  --accent: var(--blue);
+  --accent-ink: var(--white);
+  --accent-text: var(--blue);
+  --warn-bg: #FFEDE3;
+  --warn-ink: #7C2D12;
+  --warn-line: #F2B594;
+  --ok: #19794F;
+  --danger: #B42318;
+  --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --f-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: var(--black);
+    --surface: var(--black-soft);
+    --surface-2: rgba(255,255,255,0.06);
+    --ink: var(--white);
+    --muted: var(--text-muted-d);
+    --line: var(--gray-line);
+    --line-strong: rgba(255,255,255,0.22);
+    --accent: var(--blue-light);
+    --accent-ink: var(--white);
+    --accent-text: var(--white);
+    --warn-bg: #2E1B14; --warn-ink: #FFCFB8; --warn-line: #6B3A22; --ok: #5EDC9E; --danger: #FF8A7A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: var(--black);
+  --surface: var(--black-soft);
+  --surface-2: rgba(255,255,255,0.06);
+  --ink: var(--white);
+  --muted: var(--text-muted-d);
+  --line: var(--gray-line);
+  --line-strong: rgba(255,255,255,0.22);
+  --accent: var(--blue-light);
+  --accent-ink: var(--white);
+  --accent-text: var(--white);
+  --warn-bg: #2E1B14; --warn-ink: #FFCFB8; --warn-line: #6B3A22; --ok: #5EDC9E; --danger: #FF8A7A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; letter-spacing: -0.01em; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+
+.wrap {
+  max-width: min(1480px, 96vw);
+  margin: 0 auto;
+  padding-block: 20px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 18px;
+}
+.back { color: var(--muted); font-size: 14px; text-decoration: none; justify-self: start; }
+.back:hover { color: var(--accent-text); text-decoration: underline; }
+.head { display: grid; gap: 6px; }
+.head h1 { font-size: 32px; line-height: 1.1; }
+.head p { color: var(--muted); max-width: 62ch; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; min-width: 0; }
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; align-items: start; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.stack { display: grid; gap: 14px; min-width: 0; }
+
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > label, .lbl { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.in {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+textarea.in { resize: vertical; min-height: 96px; line-height: 1.5; }
+.mono { font-family: var(--f-mono); }
+input[type="color"] { width: 46px; height: 42px; padding: 3px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); flex: none; }
+.cpair { display: flex; gap: 8px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width: 16px; height: 16px; }
+.check { display: flex; gap: 8px; align-items: center; cursor: pointer; font-size: 14px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  text-decoration: none;
+  line-height: 1.2;
+}
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.danger { border-color: var(--danger); color: var(--danger); background: transparent; }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.tog { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: transparent; }
+.tog[aria-pressed="true"], .tog[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.hint { color: var(--muted); font-size: 13px; }
+.notice {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--warn-bg); color: var(--warn-ink);
+  border: 1px solid var(--warn-line); border-radius: 10px;
+  padding: 12px 14px; font-size: 14px;
+}
+.notice b { font-weight: 700; }
+.out { display: flex; gap: 8px; }
+.out .in { font-family: var(--f-mono); font-size: 13.5px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.stat { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
+.stat b { font-family: var(--f-display); font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: var(--surface-2); border-radius: 999px; padding: 4px 10px; font-size: 13px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tbl th, .tbl td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.tbl th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.scroll-x { overflow-x: auto; }
+
+#toast {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  background: var(--ink); color: var(--bg);
+  padding: 9px 16px; border-radius: 999px; font-size: 14px; font-weight: 500;
+  transition: opacity .18s, transform .18s; z-index: 20; max-width: calc(100vw - 32px); text-align: center;
+}
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 640px) {
+  .head h1 { font-size: 26px; }
+  .card { padding: 16px; }
+  .out { flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+
+/* Marca ASFREELANCE */
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+.topbar .back { margin-left: auto; }
+.brand-mark { width: 34px; height: 34px; flex: none; background: currentColor; -webkit-mask: url(data:image/png;base64,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) center / contain no-repeat; mask: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAQAAABpN6lAAAAOJklEQVR42tWdeZAVxR3HP909e1CLyyIEFQQRvAVFBBYtjcaDRCMSPOJFPFDwQkOljBpTGjVWmSrUsjwq5lDLI0ZNAlWCSpRYJl6wJShCxCAgIMixCIKLsLyZ7vwxs4+Zd+y+njdvd3bmD2rZfT09v+7f9/s7+0HlL4GkhiUYPEyJt8awmf0QSLr95QCnWb2+wZDBMC34dDe/FII5GFwrAbgYluAgEN399WE42nL9TbBjzghGqNjVORp2LQJt/SkDTAv+7baXRLAv29Fo6x2g0exmaGWXSVZcAIarqEfH0GSBRw2TO22fVoQABbWssWaAMAqso2f3BUIHON8a/3O54NLuS4YS+E+ZAtC8313NIYVgDJmY2z+sBmMQlSLDykrWcC1ODAIMXxq4rjtSoUQwKCYB5noF29m/UoslK0qAU6jHKxPBBS71TOpuZCgQ1LM6lglcCAWWUdW9yNABLisL/3NFcHblgLAy66/4AJ2QADJoXq20W5S0B/j92PZfYa+glcMqgQOVA5ZpmMTIS+BRzZTuAoQSOIjWsgkwFwU2sE/yQCgrJIDrqS6bAKNjeuzPhZj044AEGmhOEAH2egULuoNX4ABTEiPAqBpoxqadCwQCyeLECDDXNX4u7QJwgNMT3/57ybCFA5JFrqQ1SgO/DP5Nfnd51HFVmslQAUeTSZD+8slwBbVJUqFMeI3gRhy8ijGMx1DGYdIZIpMI+rAlUQOoEBD+M61K4AC3V4QAo0CY4ejkRCAThahqrggUwSZspi2f4nCN9VO6RQi8dHNoE72T8gpkYuuvEUy1Jk3DYj6w2gUSj37p8woUMMIa/jIYJjHOct+4aD5MGxAq4InglWwA7WsaqGKtpe3ooTk5TUaxBPrTEgSxbdb/MQB+Yym6DIYX0ySAeATYRmgwgBYr9dEYdtI/LWogEFSzynIbuxjmAhIFPB9jD9yZlqSpA/zU2gP0Q92gUECjNQoYVlObjlyBRFjngD0Mn1IVTF8irIPoLoYJadgDChiLF6MI7ubs9B3gUmsyNLyZBhRQwNOxCLBPdgMLBHV8aakGGs3wcrlAlr39NQO5wHIaHoK/8jUqyBwYFDt52jKQ4iGYkob1vys2AcqcXMIuKztCY2hm3650jPyta0uAmSwB5oryxRhkeF1XAqEDTIpFgD/OUxqF4CRrW0KzqCupUCJ5OwYBLitYAyyAJksy9DCc2lWJcz8HbBsCdTH8vOC2dYArLMWZwfByV3kFbQToWgLXVvoUBC6BoCfrLfsKNC0MjM9nsqwI7RDOsxzDA17ga5wCqXODooVnrcjQzxVc2RUGkQJ+HYMAXYYVTXFKYDC7rDxDD8OazvcKBNDAikQIMFesf7ckQxfD+Z1Nhgq/CCoeATrtjntKDMf6X52rBH4R1FuxCLCqg60qUXxkPbLHMfHIUMaGzrGcjLH6vAaeINPBNCVeECizGVkypfPKaX0Ie8qaADVb6duh5e6XWG60DJFpmtm3s4BQAkPZZhkEz2B4vCSTxQFmxADCGzoLCCVwT4z1dxleUo2PRHAQblBmq4Pbw8Mlk71dvNACuGgWU9UZQCiAej6JHQItVcSPlGxX+B0JbjbGaP06tgTocSpvoqw+66G4iJdxcEue1XB68B0SB4NDLXU00BNFFaOpoYbDOJB9sp9ppYrZ/ARVseqEkIb+1joEZmimd8KhC8EAjmMSf+DT4Dk7ObTyhXR+BNc+gPmaNelKFDK4FQqFE7pVZFeOYQbrMTxUaSCUwAB2WibBXAwzE/faBRKJk33hvtzJkqSryAqZquOsTWAXU9EqT4EMxDCQg+wUzYnBASMD28uufeZo9mNjhSDKxxmB4sts13GFTGEDjLEGM4GmjkcBjyqckG7HvQvZfAa38ragBOso4F5XaC6DEuUjVf7rihh/v5DjLFVgry3QzEssZD1bkLGqSQUGg2AN24KNroJSm04RgMCwD5+zHyaW7L3EeKCZZt7gLZrYFIjBxCvP7VwBgMFDJKCpbZ/fyuu8wjy2AqqcnVD6Yx2WVaga3C626IW6kjfyAIcHuCAqL4J3O6Ea0CbI6s9lF08ysHKNYCJkCM1OkQD2Jlv9nXAH1ZVNkzjAPdkHpksI/qI0MdLGwJMlrn9VIFUDfJzKLl6BwuAymncZj5ukSySA6YEzK4ED2GHpDHXm7WLwmJqcVygQ7E8TNYEoFDAzlUoQZohiCdiYWn8vW0I0CBNTB4P5eKAZnwQcCqAnW/ki+5NAUs3HFWmMS7aofjdHlk+KbQVs3zIgO5gDnGsZFOsaLFhCLbI8wJbAW2gME0MbSgGvpl4EGQw3lYcECsFYPPZguCs0lETQj69SjgQemv+W5zI7wB8xtGL4guoQ/yvgVHalXgSGH8XfAxLBUHYGeRnDuAiqKuAktqRaBC6GV+JzgQPcHeiSi+HfOUMp4ChWYNiTWjrU7Il7IJ9A0It12YNwXAzn5WwnBxjAgpAlnkYg/F08JXCAS0Ib3EPzP6pzaEUBNTwcZOfc1BnIGsO6OEdv+EfhRs0dF8P9edL0N9cY5mVl7qUOBybZ7wEH+EFO5Mc3MMfkDdaW8RnPrKxlkMGtaA+xXTnte/ZJGT/wkavZHpqlNBTA1TbFGMZD2VSl//gMbpDLL/+OrwaNdok5CRzM7gKP9DDMp1/BLaUCKStGcjvz2FCB1XRjnE6QwfBkMTIURRTA5XFuKBjG9lAsZwKf4eDlRWElIpv86sVgjuRYhnIg9QykCoMoIW5rivxUTXWs8LoBtnMEmwrlIkSRTF5vVtKryO/9BMeVvBaIqvBBKjryMEHfkidtivxvT4bRwGlMpN4yMePicAsPlliegQPc0q6F50PjCxwYQKBoJ2frZFUjqWswc2I02S0rNWTuF0F+2sEjfPNoIzcGg6oSit/KvWVQJAHVzI/RV1BiBZEDXFiShd8Whb2ok1tWqoATLBv1XEypB/JJ4J0SXZy2VVjEVdTlIYbIK2XJtR6cnFuFZuEUvEV2jous3DDfKzikY69AITiBPRbS9YJpfEIPi1yjKDtONS1Gb0kBr0AUKIJ7ksmWcfUMgk9oDCG/r7NTOZYFPJVHfgKD4ozIrjEIWngDg0RzOMPykN4geIfNCMBQz0r6WiRpNZJNHMq37VGxX6NpfxSui+GSiHQV8GDw21/l6J5AUsfbBUcaHOj4S0We1BbsjnNgg4vh8va9Age41TrW56FZS4+QxyWBQbSS4Ttcvsk58qRtA7cWGOuQQACvFHnWbSEBNMaoVp2PjO4rJ6dQvYGbLIvgwSC5j12hAiiJ5gqqcemBSy8u4E8hI0QDP0TjMJNFWevMINjOmqCv6AEWFFSBmcHnPQRNLOR4C6tQoWlkNAuKlWq1tUG61uu/MnLqr3+gwudoXD7AQ9MU8cb8MhuDYXgCQJixPJ320eJegcShyfooZDfSCN82tXMwGL5kCM0YNI2hx4qAxAzDcuZQHRrDKVIfFhZjP7ZbZSn9kt2GMPjLSB/4KEZbKoBBsplnQi6Qb8v7/RtzWMVsKHDC0LcYDOfSyAk00sgYGhnEnuzEXFxqCtyacJPdZmYHKlN6k13fYr3uEphlrQAZDPdG1l8CQ9iNwWM0grFoDNvol5W7AzyOYVfOWC1cH7TjCoazkPWsi9xrWcdJkfSMyAvalGISLy3kFUjgkCBsYRd13cEBEQ13gnYKw/tAFZL56Ei2VgHHFxS0y+BAEZ4o8sTJEWELnA69lkIqe85eMTqRkwClpQHk4fAcG0KoKvCo5WcA/B7IAH+mEcNkHgv+ykOwkFO4hOpAcAI4i34oTmF1kIPWeKynJWS2GARLI32lCpdnud/KOTYYrmVO1BiSQB2brKu//AOvw+uvEEwI5LyYj3iZKnqzBZPT5Z1vv/0Cg+ZmoAa/JctPxYgO/JZB7LIEQk3r3lyBzA40hX54lmEGwSyWR+Isvnz9CR3DCC5kItuYCcDUkNQlNdRm757UsgMQ9IzYJzLPeRE55q1iLXMxlkBYHaBNxFdfHqMPVDMqEmyUwBG0RtbjeQSNeBha6N/Oit6KQTM92AHPY4K8nurAGhCcE6ODfTP1/lycgAAncKhlmMlDMY8PkSHpt1mAmsVMQ6IRrETQxALGUsdlzECh0VzJyOzzfJFMxEOxw7KK3UUwj9UMtpi9wON7nM/TKN86VcDcGB6A4czICgmgjtW4GK7JsdkmY3BZmrUYPyuC0AcHvsDf8PA4q4QQhgPcF8MtWtBmuyoEo9hj7f/lGrj+VMdjgrNdFA4KFShYQwCEpwdTfq/AmLuZHjlbzP9rVUIA5zDr+XsYTkSgBAqPv3CpNQEqLualSJxVYOjDKBSr+CzidQsMwxmIZiHNSDRD6R/x5Q2CDawI1MYwgCF4LKS1xLOM3uBMq2C5i8NzXI4CwUC+sTSAPDTLqWkn5ShiRYBkbLfo4hidrD4oA3dY67+L4fqCoQWBKhIGl4FChH+K3jJvHJtKtq9iHOZwG0A9q2Ks//pQylkUeJnK3yJnDzxsuYx+rqAapsf6OtQ7U/UNcP6Rrq61HWs4T7DTKprrO7s7OJzNwVG6hl6c3MkvbFAsYl0IaCWa9zjRCgg1kiZiFZ08nKUnv1qsK/L+0/KCMFfHqVyUll02BsVuHomQ3J5Orx3PYNiddz7RLLYWPJ+o3fex7bHxcPgHq7IOsAcs5KiS0t4k2h2wLhILMjhsZRZX41lhk8C69NBlRCq/9UsBJ9q3c9mtnIfidc7OCyt3xbme+d9jJZB8yAi78gm774M0wIwiB+SkYQ+4PMMIW2W0U4H3U/wVJ7HaeRzm0atEmWkkd6fxqw1C8aENzOKiDk+r2nvt/D/28K0NRD8CkAAAAABJRU5ErkJggg==) center / contain no-repeat; }
+.brand-name { font-family: 'Orbitron', var(--f-display); font-weight: 700; font-size: 17px; letter-spacing: .06em; line-height: 1; white-space: nowrap; }
+.brand-name .fl { color: var(--blue-light); }
+@media (max-width: 400px) { .brand-mark { width: 28px; height: 28px; } .brand-name { font-size: 15px; } }
+
+/* Móvil y marca */
+.field > label.btn { color: var(--accent-ink); text-transform: none; letter-spacing: 0; font-size: inherit; cursor: pointer; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; clip-path: inset(50%); }
+.sr:focus-visible + .btn { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button, .btn, .tog, select, label { touch-action: manipulation; }
+.wrap { padding-block: 20px 120px; }
+.lang { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); margin-left: auto; }
+.lang button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--ink); padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 13px; min-height: 32px; }
+.lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.lang svg { width: 21px; height: 14px; border-radius: 2px; flex: none; box-shadow: 0 0 0 1px rgba(128,128,128,.35); }
+.head-row { display: flex; align-items: center; gap: 14px; }
+.tool-ico { width: 46px; height: 46px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+.tool-ico svg, .ico svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.cta-wrap { position: fixed; z-index: 15; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: stretch; max-width: calc(100vw - 32px); }
+.cta-wa { flex: none; width: 52px; border-radius: 14px; background: #25D366; color: #fff; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+.cta-wa svg { width: 26px; height: 26px; fill: currentColor; }
+.cta-wa:hover { filter: brightness(1.08); }
+.cta-wa:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
+.cta { display: flex; gap: 10px; align-items: center; max-width: min(300px, calc(100vw - 100px)); padding: 10px 14px; border-radius: 14px; background: var(--accent); color: var(--accent-ink); font-size: 13px; font-weight: 700; line-height: 1.3; text-decoration: none; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+.cta svg { flex: none; width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.cta:hover { filter: brightness(1.12); }
+.cta:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
+@media (pointer: coarse) {
+  .btn { min-height: 46px; }
+  .tog { min-height: 42px; padding: 8px 14px; }
+  .in { min-height: 46px; }
+  .check { min-height: 40px; }
+  .check input { width: 22px; height: 22px; }
+  input[type="range"] { height: 32px; }
+}
+@media (max-width: 640px) {
+  .in, select.in, textarea.in, input.in { font-size: 16px; }
+  .wrap { padding-block: 14px 130px; }
+  .tool-ico { width: 40px; height: 40px; border-radius: 10px; }
+  #toast { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+}
+
+.contact { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-top: 18px; margin-top: 6px; border-top: 1px solid var(--line); }
+.contact-t { font-weight: 700; margin-right: 6px; }
+.contact .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+@media (max-width: 520px) { .contact-t { flex-basis: 100%; } .contact .btn { flex: 1 1 100%; } }
+
+.disp { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
+.disp input { background: transparent; border: 0; padding: 0; font-family: var(--f-mono); font-size: 24px; width: 100%; min-width: 0; outline: none; }
+.disp input::placeholder { color: var(--muted); opacity: .6; }
+.disp .res { font-family: var(--f-mono); font-size: 16px; color: var(--muted); min-height: 24px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.disp .res.err { color: var(--danger); font-family: var(--f-body); font-size: 14px; }
+.cbar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.mem { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.mem .tog { font-family: var(--f-mono); font-size: 13px; padding: 4px 10px; }
+.keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+.keys button { height: 46px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); font-family: var(--f-mono); font-size: 16px; padding: 0 2px; }
+.keys button:hover { background: var(--surface-2); }
+.keys button.fn { font-size: 13.5px; color: var(--accent-text); background: var(--surface-2); }
+.keys button.op { font-weight: 700; }
+.keys button:active { transform: scale(.96); background: var(--surface-2); }
+.res-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.res-row .res { flex: 1; min-width: 0; }
+.mini { border: 1px solid var(--line-strong); background: transparent; border-radius: 8px; padding: 4px 10px; font-size: 13px; min-height: 30px; }
+@media (pointer: coarse) { .keys { gap: 8px; } .keys button { height: 54px; font-size: 18px; } .keys button.fn { font-size: 15px; } .more button { height: 50px; } .mini { min-height: 40px; padding: 6px 12px; } }
+@media (max-width: 380px) { .keys button { font-size: 15px; } .keys button.fn { font-size: 12.5px; } }
+.keys button.eq { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.keys button.clr { color: var(--danger); font-weight: 700; }
+.more { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+.more[hidden] { display: none; }
+.hist { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.hist button { width: 100%; text-align: left; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-family: var(--f-mono); font-size: 13.5px; overflow-wrap: anywhere; }
+.hist button:hover { background: var(--surface-2); }
+.pc { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line); }
+.pc:first-of-type { border-top: 0; padding-top: 0; }
+.pq { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pq .in { width: 92px; padding: 6px 8px; font-family: var(--f-mono); }
+.pr { font-weight: 700; color: var(--accent-text); font-variant-numeric: tabular-nums; min-height: 22px; }
+.pr.err { color: var(--danger); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap"><div class="topbar"><div class="brand" role="img" aria-label="ASFREELANCE"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name" aria-hidden="true"><span class="as">AS</span><span class="fl">FREELANCE</span></span></div><div class="lang" role="group" aria-label="Idioma"><button type="button" data-lang="es" aria-pressed="true"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#FCD116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#CE1126"/></svg><span>ES</span></button><button type="button" data-lang="en" aria-pressed="false"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><rect y="0.000" width="30" height="1.538" fill="#B22234"/><rect y="3.077" width="30" height="1.538" fill="#B22234"/><rect y="6.154" width="30" height="1.538" fill="#B22234"/><rect y="9.231" width="30" height="1.538" fill="#B22234"/><rect y="12.308" width="30" height="1.538" fill="#B22234"/><rect y="15.385" width="30" height="1.538" fill="#B22234"/><rect y="18.462" width="30" height="1.538" fill="#B22234"/><rect width="12.5" height="10.769" fill="#3C3B6E"/><circle cx="1.60" cy="1.50" r=".55" fill="#fff"/><circle cx="4.00" cy="1.50" r=".55" fill="#fff"/><circle cx="6.40" cy="1.50" r=".55" fill="#fff"/><circle cx="8.80" cy="1.50" r=".55" fill="#fff"/><circle cx="11.20" cy="1.50" r=".55" fill="#fff"/><circle cx="1.60" cy="4.00" r=".55" fill="#fff"/><circle cx="4.00" cy="4.00" r=".55" fill="#fff"/><circle cx="6.40" cy="4.00" r=".55" fill="#fff"/><circle cx="8.80" cy="4.00" r=".55" fill="#fff"/><circle cx="11.20" cy="4.00" r=".55" fill="#fff"/><circle cx="1.60" cy="6.50" r=".55" fill="#fff"/><circle cx="4.00" cy="6.50" r=".55" fill="#fff"/><circle cx="6.40" cy="6.50" r=".55" fill="#fff"/><circle cx="8.80" cy="6.50" r=".55" fill="#fff"/><circle cx="11.20" cy="6.50" r=".55" fill="#fff"/><circle cx="1.60" cy="9.00" r=".55" fill="#fff"/><circle cx="4.00" cy="9.00" r=".55" fill="#fff"/><circle cx="6.40" cy="9.00" r=".55" fill="#fff"/><circle cx="8.80" cy="9.00" r=".55" fill="#fff"/><circle cx="11.20" cy="9.00" r=".55" fill="#fff"/></svg><span>EN</span></button></div></div>
+  <a class="back" href="../index.html">← Caja de herramientas</a>
+  <header class="head"><div class="head-row"><span class="tool-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8 7.5h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></span><h1>Calculadora científica</h1></div>
+    <p>Trigonometría en grados, radianes o gradianes, logaritmos, potencias, raíces, factoriales, porcentajes y conversor de ángulos. Escribe la operación o usa los botones.</p>
+  </header>
+
+  <div class="split">
+    <div class="card stack">
+      <div class="cbar">
+        <div class="tabs" role="group" aria-label="Unidad de los ángulos">
+          <button type="button" class="tog" data-mode="deg" aria-pressed="true">Grados</button>
+          <button type="button" class="tog" data-mode="rad" aria-pressed="false">Radianes</button>
+          <button type="button" class="tog" data-mode="grad" aria-pressed="false">Gradianes</button>
+        </div>
+        <div class="mem" aria-label="Memoria">
+          <button type="button" class="tog" data-mem="MC" aria-label="Borrar memoria">MC</button>
+          <button type="button" class="tog" data-mem="MR" aria-label="Usar memoria">MR</button>
+          <button type="button" class="tog" data-mem="M+" aria-label="Sumar a la memoria">M+</button>
+          <button type="button" class="tog" data-mem="M-" aria-label="Restar de la memoria">M−</button>
+        </div>
+      </div>
+      <div class="disp">
+        <label for="exp" class="lbl">Operación</label>
+        <input id="exp" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sin(30) + 2^3 / √16" value="sin(30) + 2^3 / √16">
+        <div class="res-row">
+          <div class="res" id="res" aria-live="polite"></div>
+          <button type="button" class="mini" id="copy-res">Copiar</button>
+          <button type="button" class="mini" id="kb-tog" aria-pressed="false" title="Usar el teclado del teléfono">⌨</button>
+        </div>
+      </div>
+      <div class="keys" id="keys"></div>
+      <div class="btns"><button type="button" class="btn ghost" id="more-btn" aria-expanded="false">Más funciones</button></div>
+      <div class="more" id="more" hidden></div>
+      <p class="hint" id="memline">Memoria vacía. Usa punto para los decimales. Los números van sin separador de miles.</p>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <h2 style="font-size:20px;margin-bottom:10px">Porcentajes</h2>
+        <div class="pc" data-k="of">
+          <p class="pq"><span>¿Cuánto es el</span><input id="pc1a" class="in" aria-label="Porcentaje" value="15" inputmode="decimal"><span>% de</span><input id="pc1b" class="in" aria-label="Cantidad" value="200" inputmode="decimal"><span>?</span></p>
+          <p class="pr"></p>
+        </div>
+        <div class="pc" data-k="is">
+          <p class="pq"><span>¿Qué porcentaje es</span><input id="pc2a" class="in" aria-label="Parte" value="30" inputmode="decimal"><span>de</span><input id="pc2b" class="in" aria-label="Total" value="120" inputmode="decimal"><span>?</span></p>
+          <p class="pr"></p>
+        </div>
+        <div class="pc" data-k="up">
+          <p class="pq"><span>Aumentar</span><input id="pc3a" class="in" aria-label="Cantidad" value="80" inputmode="decimal"><span>en</span><input id="pc3b" class="in" aria-label="Porcentaje de aumento" value="19" inputmode="decimal"><span>%</span></p>
+          <p class="pr"></p>
+        </div>
+        <div class="pc" data-k="down">
+          <p class="pq"><span>Descontar</span><input id="pc4a" class="in" aria-label="Porcentaje de descuento" value="25" inputmode="decimal"><span>% a</span><input id="pc4b" class="in" aria-label="Precio" value="150" inputmode="decimal"></p>
+          <p class="pr"></p>
+        </div>
+        <div class="pc" data-k="chg">
+          <p class="pq"><span>Variación de</span><input id="pc5a" class="in" aria-label="Valor inicial" value="50" inputmode="decimal"><span>a</span><input id="pc5b" class="in" aria-label="Valor final" value="65" inputmode="decimal"></p>
+          <p class="pr"></p>
+        </div>
+        <div class="pc" data-k="total">
+          <p class="pq"><span>Si</span><input id="pc6a" class="in" aria-label="Parte" value="45" inputmode="decimal"><span>es el</span><input id="pc6b" class="in" aria-label="Porcentaje" value="30" inputmode="decimal"><span>%, ¿cuál es el total?</span></p>
+          <p class="pr"></p>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2 style="font-size:20px">Conversor de ángulos</h2>
+        <div class="row">
+          <div class="field"><label for="ang-v">Valor</label><input id="ang-v" class="in mono" value="pi/6" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="ang-u">Está en</label>
+            <select id="ang-u" class="in"><option value="deg">Grados</option><option value="rad" selected>Radianes</option><option value="grad">Gradianes</option></select>
+          </div>
+        </div>
+        <div class="stats" id="ang-out"></div>
+        <p class="hint">Puedes escribir pi en el valor, por ejemplo 3pi/4.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="split">
+    <div class="card">
+      <h2 style="font-size:20px;margin-bottom:10px">Operaciones recientes</h2>
+      <p class="hint" id="hist-empty">Tus resultados aparecerán aquí. Toca uno para reutilizarlo.</p>
+      <ul class="hist" id="hist"></ul>
+    </div>
+    <div class="card">
+      <h2 style="font-size:20px;margin-bottom:10px">Ángulos notables</h2>
+      <div class="scroll-x">
+        <table class="tbl" aria-label="Valores de seno, coseno y tangente">
+          <thead><tr><th>Grados</th><th>Radianes</th><th>sen</th><th>cos</th><th>tan</th></tr></thead>
+          <tbody id="notable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <aside class="contact" aria-label="Contacto"><span class="contact-t">¿Hablamos de tu proyecto?</span><a class="btn" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1ciKH7V-i3J12DdYYZbqAM7pP3RSg7rrGqBaK1qmQJqkVlm6dn8IfMamfQBp9nNcJpnT96xUp2" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Agendar una reunión</span></a><a class="btn ghost" href="https://api.whatsapp.com/send/?phone=573000973921&amp;text=Hola%2C+quisiera+m%C3%A1s+informaci%C3%B3n&amp;type=phone_number&amp;app_absent=0" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 01-12.2 7.5L3 20.5l1.6-5.3A8.5 8.5 0 1121 11.5z"/></svg><span>Escribir por WhatsApp</span></a></aside>
+</div>
+<div class="cta-wrap"><a class="cta" href="https://calendar.app.google/X4EQs1zwXps7g9Vu8" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4M8.5 14.5l2.2 2.2 4.3-4.4"/></svg><span>Si quieres herramientas como estas en tu web, móvil o PC, contáctanos</span></a><a class="cta-wa" href="https://api.whatsapp.com/send/?phone=573000973921&amp;text=Hola%2C+quisiera+m%C3%A1s+informaci%C3%B3n&amp;type=phone_number&amp;app_absent=0" target="_blank" rel="noopener noreferrer" aria-label="Escribir por WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+var U = (function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ================= Idioma (español / inglés) =================
+     El texto de las páginas está escrito en español. Cuando el idioma es inglés,
+     cada texto se busca en un diccionario (U.addDict) o en reglas con expresiones
+     regulares (U.addRules) y se reemplaza. Lo que no tiene traducción queda igual. */
+  var LKEY = 'asf-lang', lang = 'es', dict = {}, rules = [], listeners = [];
+  try {
+    var qm = /[?&]lang=(es|en)\b/.exec(location.search);
+    lang = qm ? qm[1] : (localStorage.getItem(LKEY) || 'es');
+  } catch (e) { /* sin almacenamiento */ }
+  if (lang !== 'en') lang = 'es';
+
+  function addDict(o) { for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) dict[k] = o[k]; }
+  function addRules(list) { list.forEach(function (r) { rules.push(r); }); }
+  function T(s) {
+    if (lang === 'es' || typeof s !== 'string') return s;
+    var m = /^(\s*)([\s\S]*?)(\s*)$/.exec(s), core = m[2];
+    if (!core) return s;
+    var out = dict[core];
+    if (out === undefined) {
+      for (var i = 0; i < rules.length; i++) {
+        var r = rules[i][0].exec(core);
+        if (r) { out = rules[i][1].apply(null, r); break; }
+      }
+    }
+    return out === undefined ? s : m[1] + out + m[3];
+  }
+  var ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
+  function okParent(n) { var p = n.parentNode; if (!p) return false; var t = p.nodeName; return !(t === 'SCRIPT' || t === 'STYLE' || t === 'TEXTAREA' || t === 'NOSCRIPT'); }
+  function doText(n) {
+    if (!okParent(n)) return;
+    if (n.__es === undefined || (n.__cur !== undefined && n.data !== n.__cur)) n.__es = n.data;
+    var v = T(n.__es);
+    if (n.data !== v) n.data = v;
+    n.__cur = n.data;
+  }
+  function doAttrs(el) {
+    if (!el.hasAttribute) return;
+    for (var i = 0; i < ATTRS.length; i++) {
+      var a = ATTRS[i];
+      if (!el.hasAttribute(a)) continue;
+      var st = el.__es || (el.__es = {}), cur = el.__cur || (el.__cur = {}), v = el.getAttribute(a);
+      if (st[a] === undefined || (cur[a] !== undefined && v !== cur[a])) st[a] = v;
+      var nv = T(st[a]);
+      if (v !== nv) el.setAttribute(a, nv);
+      cur[a] = nv;
+    }
+  }
+  function walk(root) {
+    if (root.nodeType === 3) { doText(root); return; }
+    if (root.nodeType !== 1 && root.nodeType !== 9 && root.nodeType !== 11) return;
+    if (root.nodeType === 1) doAttrs(root);
+    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null), n;
+    while ((n = tw.nextNode())) { if (n.nodeType === 3) doText(n); else doAttrs(n); }
+  }
+  var titleEs = null;
+  function applyAll() {
+    walk(document.body);
+    if (titleEs === null) titleEs = document.title;
+    document.title = T(titleEs);
+    document.documentElement.lang = lang;
+    $$('[data-lang]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.lang === lang ? 'true' : 'false'); });
+    /* ejemplos escritos en los campos (si la persona no los cambió) */
+    $$('[data-en]').forEach(function (el) {
+      var es = el.getAttribute('data-es') !== null ? el.getAttribute('data-es') : null;
+      if (es === null) { es = el.value; el.setAttribute('data-es', es); }
+      var want = lang === 'en' ? el.getAttribute('data-en') : es, prev = el.__lastDefault;
+      if (prev === undefined ? true : el.value === prev) {
+        if (el.value !== want) { el.value = want; el.dispatchEvent(new Event('input', { bubbles: true })); }
+      }
+      el.__lastDefault = want;
+    });
+  }
+  var observer = null;
+  function startObserver() {
+    if (observer || !window.MutationObserver) return;
+    observer = new MutationObserver(function (list) {
+      if (lang === 'es' && !observer.__track) return;
+      list.forEach(function (m) {
+        if (m.type === 'characterData') { if (m.target.__cur === undefined || m.target.data !== m.target.__cur) doText(m.target); }
+        else if (m.type === 'attributes') { var el = m.target, a = m.attributeName; if (!el.__cur || el.__cur[a] !== el.getAttribute(a)) doAttrs(el); }
+        else m.addedNodes.forEach(function (n) { walk(n); });
+      });
+    });
+    observer.__track = true;
+    observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+  }
+  function setLang(l) {
+    lang = l === 'en' ? 'en' : 'es';
+    try { localStorage.setItem(LKEY, lang); } catch (e) { /* sin almacenamiento */ }
+    applyAll();
+    listeners.forEach(function (fn) { try { fn(lang); } catch (e) { /* ignorar */ } });
+  }
+  function onLang(fn) { listeners.push(fn); }
+  function loc() { return lang === 'en' ? 'en-US' : 'es-CO'; }
+
+  /* ================= Utilidades ================= */
+  var toastTimer;
+  function toast(msg) {
+    var el = $('#toast');
+    el.textContent = msg; el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('on'); }, 2200);
+  }
+  function copyText(text, okMsg) {
+    var done = function (ok) { toast(ok ? (okMsg || 'Copiado') : 'No se pudo copiar. Selecciónalo y cópialo a mano.'); };
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove(); done(ok);
+    }
+    try { navigator.clipboard.writeText(text).then(function () { done(true); }, fallback); }
+    catch (e) { fallback(); }
+  }
+  /* Botón que pide una segunda pulsación antes de borrar (no hay confirm() en la página). */
+  function twice(btn, fn) {
+    var orig = btn.textContent, armed = false, t;
+    function reset() { armed = false; btn.textContent = orig; btn.classList.remove('danger'); clearTimeout(t); }
+    btn.addEventListener('click', function () {
+      if (!armed) { armed = true; btn.textContent = '¿Seguro? Pulsa otra vez'; btn.classList.add('danger'); t = setTimeout(reset, 3000); return; }
+      reset(); fn();
+    });
+  }
+  function bindPair(colorEl, textEl, cb) {
+    colorEl.addEventListener('input', function () { textEl.value = colorEl.value.toUpperCase(); cb(); });
+    textEl.addEventListener('input', function () {
+      var v = textEl.value.trim();
+      if (v[0] !== '#') v = '#' + v;
+      if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) {
+        if (v.length === 4) v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+        colorEl.value = v.toLowerCase(); cb();
+      }
+    });
+  }
+  function lum(hex) {
+    var n = parseInt(hex.slice(1), 16), ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(function (v) {
+      v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+  }
+  function kb(bytes) {
+    var k = bytes / 1024, s = (k >= 100 ? Math.round(k) : k >= 10 ? k.toFixed(1) : k.toFixed(2)).toString();
+    return (lang === 'en' ? s : s.replace('.', ',')) + ' KB';
+  }
+  function num(n) { return n.toLocaleString(loc()); }
+  /* Guardar un archivo. En una página normal usa la descarga del navegador;
+     dentro de claude.ai usa la capacidad "downloads". */
+  async function save(filename, data) {
+    var dl = null;
+    try { dl = (typeof claude !== 'undefined' && claude && claude.use) ? await claude.use('downloads') : null; } catch (e) { dl = null; }
+    if (dl) {
+      try {
+        var r = await dl.save({ filename: filename, data: data });
+        toast(r.status === 'saved' ? 'Archivo guardado' : 'Archivo enviado');
+        return true;
+      } catch (e) {
+        var c = e && e.code;
+        if (c === 'declined') toast('Guardado cancelado');
+        else if (c === 'rate_limited') toast('Espera un momento y vuelve a intentarlo');
+        else if (c === 'rejected_extension') toast('Ese tipo de archivo no se puede guardar desde aquí');
+        else toast('No se pudo guardar el archivo');
+        return false;
+      }
+    }
+    try {
+      var blob = data instanceof Blob ? data : new Blob([data]);
+      var url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = filename; a.style.display = 'none';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+      toast('Descarga iniciada');
+      return true;
+    } catch (e) { toast('No se pudo guardar el archivo'); return false; }
+  }
+  /* Cargar una librería local solo cuando hace falta */
+  var loaded = {};
+  function loadScript(src) {
+    if (loaded[src]) return loaded[src];
+    loaded[src] = new Promise(function (res, rej) {
+      var s = document.createElement('script'); s.src = src; s.async = true;
+      s.onload = function () { res(); };
+      s.onerror = function () { delete loaded[src]; rej(new Error('No se pudo cargar ' + src)); };
+      document.head.appendChild(s);
+    });
+    return loaded[src];
+  }
+  /* Guardar preferencias pequeñas sin romper si el navegador no deja */
+  function store(key, val) {
+    try { if (val === undefined) { var v = localStorage.getItem('asf-' + key); return v === null ? null : JSON.parse(v); } localStorage.setItem('asf-' + key, JSON.stringify(val)); } catch (e) { return null; }
+    return null;
+  }
+
+  /* ================= Idioma: botones y arranque ================= */
+  addDict({
+    '← Caja de herramientas': '← Toolbox',
+    'Idioma': 'Language',
+    'Si quieres herramientas como estas en tu web, móvil o PC, contáctanos': 'Want tools like these for your website, mobile or PC? Contact us',
+    '¿Hablamos de tu proyecto?': "Let's talk about your project",
+    'Agendar una reunión': 'Book a meeting',
+    'Escribir por WhatsApp': 'Write on WhatsApp',
+    'Copiado': 'Copied',
+    'No se pudo copiar. Selecciónalo y cópialo a mano.': 'Could not copy. Select it and copy it by hand.',
+    '¿Seguro? Pulsa otra vez': 'Sure? Tap again',
+    'Archivo guardado': 'File saved',
+    'Archivo enviado': 'File sent',
+    'Guardado cancelado': 'Save cancelled',
+    'Espera un momento y vuelve a intentarlo': 'Wait a moment and try again',
+    'Ese tipo de archivo no se puede guardar desde aquí': "This file type can't be saved from here",
+    'No se pudo guardar el archivo': 'Could not save the file',
+    'Descarga iniciada': 'Download started'
+  });
+  function init() {
+    $$('[data-lang]').forEach(function (b) { b.addEventListener('click', function () { setLang(b.dataset.lang); }); });
+    startObserver();
+    applyAll();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  try {
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('../sw.js').catch(function () { /* sin modo sin conexión */ });
+  } catch (e) { /* ignorar */ }
+
+  return {
+    $: $, $$: $$, toast: toast, copyText: copyText, twice: twice, bindPair: bindPair, lum: lum, kb: kb, num: num, save: save,
+    lang: function () { return lang; }, loc: loc, T: T, addDict: addDict, addRules: addRules, onLang: onLang, setLang: setLang,
+    loadScript: loadScript, store: store
+  };
+})();
+
+U.addDict({"Calculadora científica": "Scientific calculator", "Trigonometría en grados, radianes o gradianes, logaritmos, potencias, raíces, factoriales, porcentajes y conversor de ángulos. Escribe la operación o usa los botones.": "Trigonometry in degrees, radians or gradians, logarithms, powers, roots, factorials, percentages and an angle converter. Type the operation or use the buttons.", "Unidad de los ángulos": "Angle unit", "Grados": "Degrees", "Radianes": "Radians", "Gradianes": "Gradians", "Memoria": "Memory", "Borrar memoria": "Clear memory", "Usar memoria": "Recall memory", "Sumar a la memoria": "Add to memory", "Restar de la memoria": "Subtract from memory", "Operación": "Operation", "Copiar": "Copy", "Usar el teclado del teléfono": "Use the phone keyboard", "Más funciones": "More functions", "Menos funciones": "Fewer functions", "Memoria vacía. Usa punto para los decimales. Los números van sin separador de miles.": "Memory empty. Use a dot for decimals. Numbers go without a thousands separator.", "Porcentajes": "Percentages", "¿Cuánto es el": "What is", "% de": "% of", "Porcentaje": "Percentage", "Cantidad": "Amount", "¿Qué porcentaje es": "What percentage is", "Parte": "Part", "de": "of", "Total": "Total", "Aumentar": "Increase", "en": "by", "Porcentaje de aumento": "Increase percentage", "%": "%", "Descontar": "Discount", "% a": "% off", "Porcentaje de descuento": "Discount percentage", "Precio": "Price", "Variación de": "Change from", "a": "to", "Valor inicial": "Starting value", "Valor final": "Final value", "Si": "If", "es el": "is", "%, ¿cuál es el total?": "%, what is the total?", "Conversor de ángulos": "Angle converter", "Valor": "Value", "Está en": "Is in", "En múltiplos de π": "In multiples of π", "Puedes escribir pi en el valor, por ejemplo 3pi/4.": "You can type pi in the value, for example 3pi/4.", "Operaciones recientes": "Recent operations", "Tus resultados aparecerán aquí. Toca uno para reutilizarlo.": "Your results will appear here. Tap one to reuse it.", "Ángulos notables": "Notable angles", "Valores de seno, coseno y tangente": "Sine, cosine and tangent values", "sen": "sin", "no definida": "undefined", "Ángulo": "Angle", "Radianes ": "Radians ", "La memoria está vacía": "Memory is empty", "Primero completa la operación": "Complete the operation first", "Todavía no hay resultado": "There is no result yet", "Resultado copiado": "Result copied", "Escribe los dos números": "Enter both numbers", "El total no puede ser 0": "The total cannot be 0", "El valor inicial no puede ser 0": "The starting value cannot be 0", "El porcentaje no puede ser 0": "The percentage cannot be 0", "Escribe un valor válido, por ejemplo 90 o pi/2.": "Enter a valid value, for example 90 or pi/2.", "El factorial pide un entero entre 0 y 170": "Factorial needs a whole number between 0 and 170", "nPr pide enteros con n ≥ r ≥ 0": "nPr needs whole numbers with n ≥ r ≥ 0", "nCr pide enteros con n ≥ r ≥ 0": "nCr needs whole numbers with n ≥ r ≥ 0", "El logaritmo pide un número mayor que 0": "The logarithm needs a number greater than 0", "La tangente no está definida en ese ángulo": "The tangent is not defined at that angle", "asin pide un valor entre −1 y 1": "asin needs a value between −1 and 1", "acos pide un valor entre −1 y 1": "acos needs a value between −1 and 1", "acosh pide un valor ≥ 1": "acosh needs a value ≥ 1", "atanh pide un valor entre −1 y 1": "atanh needs a value between −1 and 1", "No hay raíz cuadrada real de un número negativo": "There is no real square root of a negative number", "Hay un número mal escrito": "A number is badly written", "No se puede dividir entre 0": "Cannot divide by 0", "El resultado no es real o está fuera de rango": "The result is not real or is out of range", "El resultado está fuera de rango": "The result is out of range", "La operación está incompleta": "The operation is incomplete", "Falta cerrar un paréntesis": "A parenthesis is not closed", "Revisa la operación": "Check the operation", "Resultado": "Result"});U.addRules([[/^Carácter no válido: (.+)$/,function (m, c) { return 'Invalid character: ' + c; }],[/^No conozco «(.+)»$/,function (m, c) { return 'I do not know «' + c + '»'; }],[/^Escribe (\S+) con paréntesis, por ejemplo (.+)$/,function (m, f, e) { return 'Write ' + f + ' with parentheses, for example ' + e; }],[/^(\S+) necesita (\d+) dato(s?)$/,function (m, f, n, s) { return f + ' needs ' + n + ' value' + s; }],[/^(.+?)  \(el (.+) % de (.+)\)$/,function (m, r, a, b) { return r + '  (' + a + ' % of ' + b + ')'; }],[/^(.+) es el (.+) % de (.+)$/,function (m, a, p, b) { return a + ' is ' + p + ' % of ' + b; }],[/^Resultado: (.+)  \(suma (.+)\)$/,function (m, r, s) { return 'Result: ' + r + '  (adds ' + s + ')'; }],[/^Precio final: (.+)  \(ahorras (.+)\)$/,function (m, r, s) { return 'Final price: ' + r + '  (you save ' + s + ')'; }],[/^(.+ %) \((aumento|disminución|sin cambio)\)$/,function (m, p, k) { return p + ' (' + (k === 'aumento' ? 'increase' : k === 'disminución' ? 'decrease' : 'no change') + ')'; }],[/^El total es (.+)$/,function (m, t) { return 'The total is ' + t; }]]);
+(function () {
+  'use strict';
+  var $ = U.$, $$ = U.$$;
+  var mode = 'deg', ans = 0, mem = 0, hasMem = false, hist = [];
+
+  /* ---------- matemáticas ---------- */
+  function toRad(x) { return mode === 'deg' ? x * Math.PI / 180 : mode === 'grad' ? x * Math.PI / 200 : x; }
+  function fromRad(x) { return mode === 'deg' ? x * 180 / Math.PI : mode === 'grad' ? x * 200 / Math.PI : x; }
+  function clean(x) { return Math.abs(x) < 1e-14 ? 0 : x; }
+  function isInt(n) { return isFinite(n) && Math.floor(n) === n; }
+  function fact(n) {
+    if (!isInt(n) || n < 0 || n > 170) throw new Error('El factorial pide un entero entre 0 y 170');
+    var r = 1; for (var i = 2; i <= n; i++) r *= i; return r;
+  }
+  function nPr(n, r) {
+    if (!isInt(n) || !isInt(r) || r < 0 || n < r) throw new Error('nPr pide enteros con n ≥ r ≥ 0');
+    var p = 1; for (var i = 0; i < r; i++) p *= (n - i); return p;
+  }
+  function nCr(n, r) {
+    if (!isInt(n) || !isInt(r) || r < 0 || n < r) throw new Error('nCr pide enteros con n ≥ r ≥ 0');
+    r = Math.min(r, n - r); var c = 1; for (var i = 1; i <= r; i++) c = c * (n - r + i) / i; return Math.round(c);
+  }
+  function pos(x, name) { if (!(x > 0)) throw new Error('El logaritmo pide un número mayor que 0'); return x; }
+  var F = {
+    sin: function (x) { return clean(Math.sin(toRad(x))); },
+    cos: function (x) { return clean(Math.cos(toRad(x))); },
+    tan: function (x) {
+      var r = toRad(x);
+      if (Math.abs(Math.cos(r)) < 1e-12) throw new Error('La tangente no está definida en ese ángulo');
+      return clean(Math.tan(r));
+    },
+    asin: function (x) { if (Math.abs(x) > 1) throw new Error('asin pide un valor entre −1 y 1'); return fromRad(Math.asin(x)); },
+    acos: function (x) { if (Math.abs(x) > 1) throw new Error('acos pide un valor entre −1 y 1'); return fromRad(Math.acos(x)); },
+    atan: function (x) { return fromRad(Math.atan(x)); },
+    sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh, asinh: Math.asinh,
+    acosh: function (x) { if (x < 1) throw new Error('acosh pide un valor ≥ 1'); return Math.acosh(x); },
+    atanh: function (x) { if (Math.abs(x) >= 1) throw new Error('atanh pide un valor entre −1 y 1'); return Math.atanh(x); },
+    ln: function (x) { return Math.log(pos(x)); },
+    log: function (x) { return Math.log10(pos(x)); },
+    log2: function (x) { return Math.log2(pos(x)); },
+    sqrt: function (x) { if (x < 0) throw new Error('No hay raíz cuadrada real de un número negativo'); return Math.sqrt(x); },
+    cbrt: Math.cbrt, abs: Math.abs, exp: Math.exp,
+    floor: Math.floor, ceil: Math.ceil, round: Math.round,
+    fact: fact, ncr: nCr, npr: nPr,
+    rand: function () { return Math.random(); }
+  };
+  var C = { pi: function () { return Math.PI; }, e: function () { return Math.E; }, ans: function () { return ans; } };
+
+  function tokenize(src) {
+    var s = src.replace(/×/g, '*').replace(/÷/g, '/').replace(/[−–]/g, '-').replace(/²/g, '^2').replace(/³/g, '^3').replace(/√/g, 'sqrt').replace(/π/g, 'pi');
+    var t = [], i = 0, m, c;
+    while (i < s.length) {
+      c = s[i];
+      if (/\s/.test(c)) { i++; continue; }
+      if (/[0-9.]/.test(c)) {
+        m = /^(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/i.exec(s.slice(i));
+        if (!m) throw new Error('Hay un número mal escrito');
+        t.push({ k: 'n', v: parseFloat(m[0]) }); i += m[0].length; continue;
+      }
+      if (/[a-z]/i.test(c)) {
+        m = /^(?:mod(?![a-z])|[a-z][a-z0-9]*)/i.exec(s.slice(i));
+        var nm = m[0].toLowerCase(), sp = /^([a-z]+)(\d+)$/.exec(nm);
+        if (!F[nm] && !C[nm] && sp && (F[sp[1]] || C[sp[1]])) { t.push({ k: 'i', v: sp[1] }); t.push({ k: 'n', v: parseFloat(sp[2]) }); }
+        else t.push({ k: 'i', v: nm });
+        i += m[0].length; continue;
+      }
+      if ('+-*/^!%(),'.indexOf(c) >= 0) { t.push({ k: c }); i++; continue; }
+      throw new Error('Carácter no válido: ' + c);
+    }
+    return t;
+  }
+
+  function evaluate(src) {
+    var t = tokenize(src), p = 0;
+    if (!t.length) throw new Error('vacío');
+    function isK(k) { return t[p] && t[p].k === k; }
+    function expr() {
+      var a = term(), acc = a.v;
+      while (isK('+') || isK('-')) {
+        var op = t[p++].k, q = term(), val = q.pct ? acc * q.v : q.v;
+        acc = op === '+' ? acc + val : acc - val;
+      }
+      return { v: acc, pct: false };
+    }
+    function term() {
+      var a = unary(), v = a.v, pct = a.pct, b, tk;
+      for (;;) {
+        tk = t[p];
+        if (!tk) break;
+        if (tk.k === '*' || tk.k === '/' || (tk.k === 'i' && tk.v === 'mod')) {
+          p++; b = unary();
+          if (tk.k === '*') v = v * b.v;
+          else {
+            if (b.v === 0) throw new Error('No se puede dividir entre 0');
+            v = tk.k === '/' ? v / b.v : v - b.v * Math.floor(v / b.v);
+          }
+          pct = false;
+        } else if (tk.k === 'n' || tk.k === '(' || tk.k === 'i') {
+          b = unary(); v = v * b.v; pct = false;
+        } else break;
+      }
+      return { v: v, pct: pct };
+    }
+    function unary() {
+      if (isK('-')) { p++; var x = unary(); return { v: -x.v, pct: x.pct }; }
+      if (isK('+')) { p++; return unary(); }
+      return power();
+    }
+    function power() {
+      var b = post();
+      if (isK('^')) {
+        p++; var e = unary(), r = Math.pow(b.v, e.v);
+        if (!isFinite(r)) throw new Error('El resultado no es real o está fuera de rango');
+        return { v: r, pct: false };
+      }
+      return b;
+    }
+    function post() {
+      var x = primary(), pct = false;
+      while (isK('!') || isK('%')) {
+        if (t[p++].k === '!') { x = fact(x); pct = false; } else { x = x / 100; pct = true; }
+      }
+      return { v: x, pct: pct };
+    }
+    function primary() {
+      var tk = t[p];
+      if (!tk) throw new Error('La operación está incompleta');
+      if (tk.k === 'n') { p++; return tk.v; }
+      if (tk.k === '(') {
+        p++; var r = expr();
+        if (!isK(')')) throw new Error('Falta cerrar un paréntesis');
+        p++; return r.v;
+      }
+      if (tk.k === 'i') {
+        p++;
+        if (C[tk.v]) return C[tk.v]();
+        var f = F[tk.v];
+        if (!f) throw new Error('No conozco «' + tk.v + '»');
+        if (!isK('(')) {
+          if (f.length !== 1) throw new Error('Escribe ' + tk.v + ' con paréntesis, por ejemplo ' + tk.v + '(5,2)');
+          return f(power().v);
+        }
+        p++;
+        var args = [];
+        if (!isK(')')) { for (;;) { args.push(expr().v); if (isK(',')) { p++; continue; } break; } }
+        if (!isK(')')) throw new Error('Falta cerrar un paréntesis');
+        p++;
+        if (args.length !== f.length) throw new Error(tk.v + ' necesita ' + f.length + ' dato' + (f.length === 1 ? '' : 's'));
+        return f.apply(null, args);
+      }
+      throw new Error('Revisa la operación');
+    }
+    var out = expr();
+    if (p !== t.length) throw new Error('Revisa la operación');
+    if (!isFinite(out.v)) throw new Error('El resultado está fuera de rango');
+    return out.v;
+  }
+
+  function fmt(x) {
+    if (!isFinite(x)) return 'Error';
+    if (x === 0) return '0';
+    var a = Math.abs(x);
+    if (a >= 1e15 || a < 1e-9) return x.toExponential(8).replace(/\.?0+e/, 'e').replace('e+', 'e');
+    return String(parseFloat(x.toPrecision(12)));
+  }
+
+  /* ---------- pantalla y teclado ---------- */
+  var exp = $('#exp'), res = $('#res');
+  function update(showErr) {
+    var v = exp.value.trim();
+    res.className = 'res';
+    if (!v) { res.textContent = ''; return; }
+    try { res.textContent = '= ' + fmt(evaluate(v)); }
+    catch (e) { res.textContent = showErr ? e.message : ''; if (showErr) res.className = 'res err'; }
+  }
+  function insert(txt) {
+    var i = exp.selectionStart, j = exp.selectionEnd;
+    if (i == null) { i = j = exp.value.length; }
+    exp.setRangeText(txt, i, j, 'end'); exp.focus(); update(false);
+  }
+  function back() {
+    var i = exp.selectionStart, j = exp.selectionEnd;
+    if (i === j && i > 0) { exp.setRangeText('', i - 1, i, 'end'); }
+    else if (i !== j) { exp.setRangeText('', i, j, 'end'); }
+    exp.focus(); update(false);
+  }
+  function equals() {
+    var v = exp.value.trim();
+    if (!v) return;
+    try {
+      var r = evaluate(v);
+      ans = r;
+      hist.unshift({ e: v, r: fmt(r) }); hist = hist.slice(0, 10);
+      exp.value = fmt(r); res.textContent = ''; res.className = 'res';
+      renderHist();
+    } catch (e) { res.textContent = e.message; res.className = 'res err'; }
+  }
+  var KEYS = [
+    ['sin', 'sin(', 'fn'], ['cos', 'cos(', 'fn'], ['tan', 'tan(', 'fn'], ['(', '(', 'op'], [')', ')', 'op'],
+    ['sin⁻¹', 'asin(', 'fn'], ['cos⁻¹', 'acos(', 'fn'], ['tan⁻¹', 'atan(', 'fn'], ['π', 'π', 'fn'], ['e', 'e', 'fn'],
+    ['ln', 'ln(', 'fn'], ['log', 'log(', 'fn'], ['√', '√(', 'fn'], ['x²', '^2', 'fn'], ['xʸ', '^', 'fn'],
+    ['7', '7'], ['8', '8'], ['9', '9'], ['÷', '÷', 'op'], ['⌫', 'BACK', 'clr'],
+    ['4', '4'], ['5', '5'], ['6', '6'], ['×', '×', 'op'], ['AC', 'CLEAR', 'clr'],
+    ['1', '1'], ['2', '2'], ['3', '3'], ['−', '−', 'op'], ['Ans', 'ans', 'fn'],
+    ['0', '0'], ['.', '.'], ['%', '%', 'fn'], ['+', '+', 'op'], ['=', 'EQ', 'eq']
+  ];
+  var MORE = [
+    ['n!', '!', 'fn'], ['|x|', 'abs(', 'fn'], ['1/x', '1/(', 'fn'], ['mod', ' mod ', 'fn'], ['exp', 'exp(', 'fn'],
+    ['nCr', 'nCr(', 'fn'], ['nPr', 'nPr(', 'fn'], ['log₂', 'log2(', 'fn'], ['∛', 'cbrt(', 'fn'], [',', ',', 'op'],
+    ['sinh', 'sinh(', 'fn'], ['cosh', 'cosh(', 'fn'], ['tanh', 'tanh(', 'fn'], ['floor', 'floor(', 'fn'], ['ceil', 'ceil(', 'fn'],
+    ['round', 'round(', 'fn'], ['rand', 'rand()', 'fn'], ['asinh', 'asinh(', 'fn'], ['acosh', 'acosh(', 'fn'], ['atanh', 'atanh(', 'fn']
+  ];
+  function build(list, host) {
+    list.forEach(function (k) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = k[0]; b.dataset.ins = k[1];
+      if (k[2]) b.className = k[2];
+      host.appendChild(b);
+    });
+  }
+  build(KEYS, $('#keys')); build(MORE, $('#more'));
+  function onKey(e) {
+    var b = e.target.closest('button[data-ins]');
+    if (!b) return;
+    var v = b.dataset.ins;
+    if (v === 'EQ') equals();
+    else if (v === 'CLEAR') { exp.value = ''; res.textContent = ''; res.className = 'res'; exp.focus(); }
+    else if (v === 'BACK') back();
+    else insert(v);
+  }
+  ['#keys', '#more'].forEach(function (s) {
+    $(s).addEventListener('mousedown', function (e) { e.preventDefault(); });
+    $(s).addEventListener('click', onKey);
+  });
+  $('#more-btn').addEventListener('click', function () {
+    var h = $('#more').hidden;
+    $('#more').hidden = !h;
+    this.setAttribute('aria-expanded', h ? 'true' : 'false');
+    this.textContent = h ? 'Menos funciones' : 'Más funciones';
+  });
+  exp.addEventListener('input', function () { update(false); });
+  exp.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); equals(); }
+    else if (e.key === 'Escape') { exp.value = ''; update(false); }
+  });
+  $$('[data-mode]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      mode = b.dataset.mode;
+      $$('[data-mode]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      update(false); renderAngle();
+    });
+  });
+  function memLine() {
+    $('#memline').textContent = hasMem ? 'Memoria: ' + fmt(mem) : 'Memoria vacía. Usa punto para los decimales. Los números van sin separador de miles.';
+  }
+  $$('[data-mem]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.dataset.mem, cur;
+      if (k === 'MC') { mem = 0; hasMem = false; memLine(); return; }
+      if (k === 'MR') { if (!hasMem) return U.toast('La memoria está vacía'); insert(fmt(mem)); return; }
+      try { cur = exp.value.trim() ? evaluate(exp.value) : ans; } catch (e) { return U.toast('Primero completa la operación'); }
+      mem = (hasMem ? mem : 0) + (k === 'M+' ? cur : -cur); hasMem = true; memLine();
+    });
+  });
+  function renderHist() {
+    var ul = $('#hist'); ul.innerHTML = '';
+    $('#hist-empty').hidden = hist.length > 0;
+    hist.forEach(function (h) {
+      var li = document.createElement('li'), b = document.createElement('button');
+      b.type = 'button'; b.textContent = h.e + ' = ' + h.r;
+      b.addEventListener('click', function () { insert(h.r); });
+      li.appendChild(b); ul.appendChild(li);
+    });
+  }
+
+  /* ---------- porcentajes ---------- */
+  function num(el) { var s = el.value.trim().replace(',', '.'); return s === '' || isNaN(+s) ? NaN : +s; }
+  function r6(x) { return fmt(Math.round(x * 1e6) / 1e6); }
+  var PC = {
+    of: function (a, b) { return r6(a * b / 100) + '  (el ' + r6(a) + ' % de ' + r6(b) + ')'; },
+    is: function (a, b) { if (b === 0) throw new Error('El total no puede ser 0'); return a + ' es el ' + r6(a / b * 100) + ' % de ' + b; },
+    up: function (a, b) { return 'Resultado: ' + r6(a * (1 + b / 100)) + '  (suma ' + r6(a * b / 100) + ')'; },
+    down: function (a, b) { return 'Precio final: ' + r6(b * (1 - a / 100)) + '  (ahorras ' + r6(b * a / 100) + ')'; },
+    chg: function (a, b) {
+      if (a === 0) throw new Error('El valor inicial no puede ser 0');
+      var d = (b - a) / Math.abs(a) * 100;
+      return (d >= 0 ? '+' : '−') + r6(Math.abs(d)) + ' % ' + (d > 0 ? '(aumento)' : d < 0 ? '(disminución)' : '(sin cambio)');
+    },
+    total: function (a, b) { if (b === 0) throw new Error('El porcentaje no puede ser 0'); return 'El total es ' + r6(a / (b / 100)); }
+  };
+  $$('.pc').forEach(function (box) {
+    var ins = $$('input', box), out = $('.pr', box);
+    function run() {
+      var a = num(ins[0]), b = num(ins[1]);
+      out.className = 'pr';
+      if (isNaN(a) || isNaN(b)) { out.textContent = 'Escribe los dos números'; out.className = 'pr err'; return; }
+      try { out.textContent = PC[box.dataset.k](a, b); }
+      catch (e) { out.textContent = e.message; out.className = 'pr err'; }
+    }
+    ins.forEach(function (i) { i.addEventListener('input', run); });
+    run();
+  });
+
+  /* ---------- ángulos ---------- */
+  function piFraction(rad) {
+    var r = rad / Math.PI;
+    if (Math.abs(r) < 1e-12) return '0';
+    for (var q = 1; q <= 360; q++) {
+      var p = Math.round(r * q);
+      if (p !== 0 && Math.abs(p / q - r) < 1e-9) {
+        var sign = p < 0 ? '−' : '', ap = Math.abs(p);
+        var top = ap === 1 ? 'π' : ap + 'π';
+        return sign + (q === 1 ? top : top + '/' + q);
+      }
+    }
+    return '';
+  }
+  function renderAngle() {
+    var host = $('#ang-out'); host.innerHTML = '';
+    var v;
+    try { v = evaluate($('#ang-v').value); } catch (e) { host.innerHTML = '<p class="hint">Escribe un valor válido, por ejemplo 90 o pi/2.</p>'; return; }
+    var u = $('#ang-u').value, rad = u === 'deg' ? v * Math.PI / 180 : u === 'grad' ? v * Math.PI / 200 : v;
+    var items = [[fmt(rad * 180 / Math.PI) + '°', 'Grados'], [fmt(rad), 'Radianes'], [fmt(rad * 200 / Math.PI) + ' g', 'Gradianes']];
+    var pf = piFraction(rad);
+    if (pf) items.push([pf + ' rad', 'En múltiplos de π']);
+    items.forEach(function (it) {
+      var d = document.createElement('div'); d.className = 'stat';
+      var b = document.createElement('b'); b.textContent = it[0]; b.style.fontSize = '19px'; b.style.overflowWrap = 'anywhere';
+      var s = document.createElement('span'); s.textContent = it[1];
+      d.appendChild(b); d.appendChild(s); host.appendChild(d);
+    });
+  }
+  $('#ang-v').addEventListener('input', renderAngle);
+  $('#ang-u').addEventListener('change', renderAngle);
+
+  var NOTABLE = [
+    ['0°', '0', '0', '1', '0'], ['30°', 'π/6', '1/2', '√3/2', '√3/3'], ['45°', 'π/4', '√2/2', '√2/2', '1'],
+    ['60°', 'π/3', '√3/2', '1/2', '√3'], ['90°', 'π/2', '1', '0', 'no definida'], ['120°', '2π/3', '√3/2', '−1/2', '−√3'],
+    ['135°', '3π/4', '√2/2', '−√2/2', '−1'], ['150°', '5π/6', '1/2', '−√3/2', '−√3/3'], ['180°', 'π', '0', '−1', '0'],
+    ['270°', '3π/2', '−1', '0', 'no definida'], ['360°', '2π', '0', '1', '0']
+  ];
+  NOTABLE.forEach(function (r) {
+    var tr = document.createElement('tr');
+    r.forEach(function (c) { var td = document.createElement('td'); td.textContent = c; tr.appendChild(td); });
+    $('#notable').appendChild(tr);
+  });
+
+  /* copiar el resultado (o lo escrito si ya se presionó =) */
+  $('#copy-res').addEventListener('click', function () {
+    var t = res.textContent.replace(/^=\s*/, '');
+    if (!t || res.className.indexOf('err') >= 0) { try { t = fmt(evaluate(exp.value)); } catch (e) { t = ''; } }
+    if (!t) return U.toast('Todavía no hay resultado');
+    U.copyText(t, 'Resultado copiado');
+  });
+  /* en pantallas táctiles se usa el teclado propio; el botón ⌨ activa el del teléfono */
+  var touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  function kbMode(on) { exp.setAttribute('inputmode', on ? 'text' : 'none'); $('#kb-tog').setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  if (touch) kbMode(false); else $('#kb-tog').hidden = true;
+  $('#kb-tog').addEventListener('click', function () { kbMode(this.getAttribute('aria-pressed') !== 'true'); exp.blur(); exp.focus(); });
+
+  /* recordar unidad, memoria e historial en este navegador */
+  function saveState() { U.store('calc', { mode: mode, mem: mem, hasMem: hasMem, hist: hist }); }
+  var st = U.store('calc');
+  if (st) {
+    if (/^(deg|rad|grad)$/.test(st.mode)) { mode = st.mode; $$('[data-mode]').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.mode === mode ? 'true' : 'false'); }); }
+    if (typeof st.mem === 'number') { mem = st.mem; hasMem = !!st.hasMem; }
+    if (Array.isArray(st.hist)) hist = st.hist.slice(0, 10);
+  }
+  $$('[data-mode],[data-mem],#keys button').forEach(function (b) { b.addEventListener('click', function () { setTimeout(saveState, 0); }); });
+  exp.addEventListener('keydown', function (e) { if (e.key === 'Enter') setTimeout(saveState, 0); });
+  memLine();
+  update(false); renderAngle(); renderHist();
+})();
+</script>
+</body>
+</html>
